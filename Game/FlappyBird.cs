@@ -101,6 +101,7 @@ namespace ConsoleFlappyBird.Game
 				Console.Write("■ ");
 
 			Console.WriteLine("\n\nSCORE: " + score + "\n");
+            Console.WriteLine("Press W to jump");
 		}
 
 		public void move_obsticles()
