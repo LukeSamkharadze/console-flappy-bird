@@ -1,6 +1,6 @@
-﻿using ConsoleFlappyBird.Game;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using ConsoleFlappyBird.Game;
 
 namespace ConsoleFlappyBird
 {
@@ -8,36 +8,29 @@ namespace ConsoleFlappyBird
     {
         static void Main(string[] args)
         {
-			FlappyBird flappy_bird_game_1 = new FlappyBird();
-			flappy_bird_game_1.reset_game();
+			FlappyBird flappyBird = new FlappyBird();
+			flappyBird.ResetGame();
 
-			flappy_bird_game_1.print_game();
+			flappyBird.PrintGame();
 
 			Console.Write("\n\nPress ENTER to contine");
 			Console.ReadLine();
 
-			Task.Run(flappy_bird_game_1.zdarova);
+			Task.Run(flappyBird.StartGettingInput);
 
 			while (true)
 			{
-				flappy_bird_game_1.print_game();
+				flappyBird.PrintGame();
+				flappyBird.CheckObsticles();
+				flappyBird.UpdateBirdPosition();
+				flappyBird.UpdateObsticles();
+				flappyBird.ResetMovementKeyPress();
 
-				flappy_bird_game_1.check_obsticles();
-
-				flappy_bird_game_1.move_bird();
-
-				flappy_bird_game_1.move_obsticles();
-
-				flappy_bird_game_1.reset_movement();
-
-				if (!flappy_bird_game_1.check_game())
+				if (!flappyBird.CheckGame())
 					break;
 
-				System.Threading.Thread.Sleep(75);
+				System.Threading.Thread.Sleep(33);
 			}
-
-			Console.Write("\n\nPress ENTER to contine");
-			Console.ReadLine();
 		}
     }
 }

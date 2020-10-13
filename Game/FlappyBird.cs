@@ -4,68 +4,104 @@ using System.Collections.Specialized;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ConsoleFlappyBird.Objects;
 
 namespace ConsoleFlappyBird.Game
 {
-    class FlappyBird
-    {
-		public const int length = 15;
+	class FlappyBird
+	{
+		private const int length = 15;
 
-        public int[] bird_ij = new int[2];
-        public int[,,,] obsticles_n_x_y_ij = new int[2,2,10,2];
+		private Bird Bird { get; set; }
+		private int Score { get; set; }
 
-	    public int score;
-        public int moving_up;
-        public char movement;
+		private Tube tube;
 
-        public void reset_game()
+		private char KeyPressed { get; set; }
+
+		public FlappyBird()
         {
-            bird_ij[0] = 1;
-            bird_ij[1] = 1;
+			Bird = new Bird();
+			ResetGame();
+        }
 
-            moving_up = 0;
+		public void ResetGame()
+        {
+			Bird.X = 1;
+			Bird.Y = 1;
+            Bird.Dy = 1;
 
-            score = 0;
-
-            create_obsticles();
+            Score = 0;
+			tube = new Tube(length, 0, length, 2, 5);
 		}
 
-		public void zdarova()
+		public void UpdateBirdPosition()
         {
-			while(true)
-				movement = System.Console.ReadKey(true).KeyChar;
+			if (KeyPressed == 'w')
+				Bird.Dy = -3;
+
+			Bird.Y += Math.Sign(Bird.Dy);
+
+			if (Bird.Dy != 1)
+				Bird.Dy += 1;
 		}
 
-        internal void move_bird()
-        {
-			if (movement == 'w')
+		public void UpdateObsticles()
+		{
+			tube.X--;
+		}
+
+		public void CheckObsticles()
+		{
+			if (tube.X == -2)
 			{
-				moving_up = 3;
-				bird_ij[0]--;
-			}
-			else
-			{
-				if (moving_up == 0)
-					bird_ij[0]++;
-
-				if (moving_up != 0)
-					moving_up--;
-
-				if (moving_up != 0)
-					bird_ij[0]--;
+				tube = new Tube(length, 0, length, 2, 5);
+				Score++;
 			}
 		}
 
-        public void print_game()
+		public bool CheckGame()
+		{
+			if (Bird.Y == length || Bird.Y == -1 || Bird.X == length || Bird.X == -1)
+            {
+				Console.Write("\n\nPress ENTER to restart");
+				Console.ReadLine();
+				ResetGame();
+			}
+
+			for (int x = 0; x < tube.Hitbox.GetLength(1); x++)
+				for (int y = 0; y < tube.Hitbox.GetLength(0); y++)
+					if (tube.Hitbox[y,x] == true && Bird.Y == tube.Y + y && Bird.X == tube.X + x)
+					{
+                        Console.Write("\n\nPress ENTER to restart");
+						Console.ReadLine();
+						ResetGame();
+					}
+
+			return true;
+		}
+
+		public void StartGettingInput()
+		{
+			while (true)
+				KeyPressed = System.Console.ReadKey(true).KeyChar;
+		}
+
+		public void ResetMovementKeyPress()
+		{
+			KeyPressed = ' ';
+		}
+
+		public void PrintGame()
 		{
 			Console.Clear();
 
 			for (int i = 0; i < length + 2; i++)
-                Console.Write("■ ");
+				Console.Write("■ ");
 
 			Console.WriteLine();
 
-			bool flag;
+			bool isEmptySpace;
 
 			for (int i = 0; i < length; i++)
 			{
@@ -73,108 +109,33 @@ namespace ConsoleFlappyBird.Game
 
 				for (int j = 0; j < length; j++)
 				{
-					flag = true;
+					isEmptySpace = true;
 
-					for (int n = 0; n < 2; n++)
-						for (int x = 0; x < 2; x++)
-							for (int y = 0; y < 10; y++)
-								if (obsticles_n_x_y_ij[n,x,y,0] == i && obsticles_n_x_y_ij[n,x,y,1] == j)
-								{
-									Console.Write("■ ");
-									flag = false;
-								}
+					for (int x = 0; x < tube.Hitbox.GetLength(1); x++)
+						for (int y = 0; y < tube.Hitbox.GetLength(0); y++)
+							if (tube.X + x == j && tube.Y + y == i && tube.Hitbox[y, x] == true)
+							{
+								Console.Write("■ ");
+								isEmptySpace = false;
+							}
 
-					if (bird_ij[0] == i && bird_ij[1] == j && flag)
+					if (Bird.Y == i && Bird.X == j && isEmptySpace)
 					{
-						Console.Write("^ ");
-						flag = false;
+						Console.Write("# ");
+						isEmptySpace = false;
 					}
 
-					if (flag)
+					if (isEmptySpace)
 						Console.Write("  ");
 				}
 
-                Console.WriteLine("■");
+				Console.WriteLine("■");
 			}
 
 			for (int i = 0; i < length + 2; i++)
 				Console.Write("■ ");
 
-			Console.WriteLine("\n\nSCORE: " + score + "\n");
-            Console.WriteLine("Press W to jump");
-		}
-
-		public void move_obsticles()
-		{
-			for (int n = 0; n < 2; n++)
-				for (int x = 0; x < 2; x++)
-					for (int y = 0; y < 10; y++)
-						obsticles_n_x_y_ij[n,x,y,1]--;
-		}
-
-
-		public void check_obsticles()
-		{
-			if (obsticles_n_x_y_ij[0,1,0,1] == 0)
-				create_obsticles();
-		}
-
-
-		public void create_obsticles()
-		{
-			int rand_1 = new Random().Next(2, 8+1);
-
-			int rand_2 = new Random().Next(3, 5+1);
-
-			int[] move_tunnels_i = { rand_1, length - rand_1 - rand_2 };
-
-			int i = 0;
-
-			for (int n = 0; n < 2; n++)
-			{
-				for (int x = 0; x < 2; x++)
-				{
-					if (n == 0)
-						i = 0;
-					else
-						i = length - 1;
-
-					for (int y = 0; y != move_tunnels_i[n]; y++)
-					{
-						obsticles_n_x_y_ij[n,x,y,0] = i;
-						obsticles_n_x_y_ij[n,x,y,1] = length + x;
-
-						if (n == 0)
-							i++;
-						else
-							i--;
-					}
-				}
-			}
-			score++;
-		}
-
-		public void reset_movement()
-		{
-			movement = ' ';
-		}
-
-		public bool check_game()
-		{
-			if (bird_ij[0] == length || bird_ij[0] == -1 || bird_ij[1] == length || bird_ij[1] == -1)
-				return false;
-
-			for (int n = 0; n < 2; n++)
-				for (int x = 0; x < 2; x++)
-					for (int y = 0; y < 10; y++)
-						if (bird_ij[0] == obsticles_n_x_y_ij[n,x,y,0] && bird_ij[1] == obsticles_n_x_y_ij[n,x,y,1])
-						{
-                            Console.Write("\n\nPress ENTER to contine");
-							Console.ReadLine();
-							reset_game();
-						}
-
-			return true;
+			Console.Write($"\n\nSCORE: {Score}");
 		}
 	}
 }
